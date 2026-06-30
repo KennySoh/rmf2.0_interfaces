@@ -1,0 +1,7 @@
+{
+  "timestamp": "2026-06-24T10:00:00Z",
+  "requesterId": "fa_session_123",
+  "requestId": "req-c1d2e3f4",
+  "command": "start_charge",
+  "robotId": "robot-01"
+}

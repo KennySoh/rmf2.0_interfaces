@@ -1,0 +1,35 @@
+{
+  "timestamp": "2026-06-24T10:00:04Z",
+  "deviceId": "S001",
+  "manufacturer": "Manufacturer",
+  "pose": {
+    "x": 5.1,
+    "y": 2.3,
+    "theta": 0.78,
+    "mapId": "artc-level-3",
+    "positionInitialized": true
+  },
+  "order": {
+    "assignmentId": "assign-001",
+    "orderId": "order-abc123",
+    "orderUpdateId": 0,
+    "phase": "PHASE_RUNNING",
+    "lastNodeId": "n1",
+    "lastNodeSequenceId": 0,
+    "nodesInBase": 2,
+    "nodesInHorizon": 0,
+    "driving": true,
+    "paused": false,
+    "newBaseRequest": false,
+    "pendingStitchCount": 0,
+    "actionStates": [],
+    "errors": []
+  },
+  "assignment": {
+    "assignmentId": "assign-001",
+    "orderId": "order-abc123",
+    "orderUpdateId": 0,
+    "decision": "ASSIGNED",
+    "errors": []
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "customWorkcellTypeId": "inspection-station-v1",
+  "deviceType": "work_cell",
+  "subtype": "inspection_station",
+  "displayName": "Inspection Station",
+  "description": "A workcell for visual and dimensional inspection of parts.",
+  "states": ["idle", "inspecting", "pass", "fail", "error", "offline"],
+  "requests": [
+    {
+      "request": "start_inspection",
+      "requiredParams": ["itemId", "inspectionRecipeId"]
+    },
+    {
+      "request": "capture_image",
+      "requiredParams": ["itemId", "cameraId"]
+    },
+    {
+      "request": "finish_inspection",
+      "requiredParams": ["itemId"]
+    }
+  ]
+}

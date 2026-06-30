@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "device_controller_connection",
+  "title": "ControllerConnection",
+  "description": "Heartbeat published by a Device Controller on its connection topic (§7.1.1). Wire format carries only ONLINE or OFFLINE — CONNECTION_BROKEN is derived by the FCS from message staleness.",
+  "type": "object",
+  "required": ["timestamp", "controllerId", "connectionState"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "controllerId": {
+      "type": "string"
+    },
+    "connectionState": {
+      "type": "string",
+      "enum": ["ONLINE", "OFFLINE"]
+    },
+    "connections": {
+      "type": "array",
+      "description": "Per-upstream-connection states (e.g. each MQTT broker bridge)",
+      "items": {
+        "type": "object",
+        "required": ["name", "connectionState"],
+        "properties": {
+          "name": { "type": "string" },
+          "connectionState": {
+            "type": "string",
+            "enum": ["ONLINE", "OFFLINE"]
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-06-24T10:00:10Z",
+  "actions": [
+    {
+      "actionType": "cancelOrder",
+      "actionId": "ia-cancel-001",
+      "blockingType": "HARD",
+      "actionDescription": "Cancel current order immediately"
+    }
+  ]
+}

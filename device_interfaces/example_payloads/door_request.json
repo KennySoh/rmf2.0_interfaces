@@ -1,0 +1,6 @@
+{
+  "request_time": { "sec": 1750762800, "nanosec": 0 },
+  "requester_id": "fa_session_123",
+  "door_name": "door-a",
+  "requested_mode": "MODE_OPEN"
+}

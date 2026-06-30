@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workcell_request",
+  "title": "WorkcellRequest",
+  "description": "Request issued by RMF2.0 to a workcell. The request field names the operation; params carries request-specific arguments and is intentionally open to accommodate any workcell type.",
+  "type": "object",
+  "required": ["timestamp", "requestId", "deviceId", "request"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Unique ID for tracking this request against a state response"
+    },
+    "deviceId": {
+      "type": "string",
+      "description": "The target workcell device ID"
+    },
+    "request": {
+      "type": "string",
+      "description": "Request to perform, e.g. pick, place, start_mixing, inspect"
+    },
+    "params": {
+      "type": "object",
+      "description": "Request-specific params — open schema, validated against Custom Workcell Type",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

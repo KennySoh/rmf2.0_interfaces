@@ -1,0 +1,11 @@
+{
+  "lift_time": { "sec": 1750762805, "nanosec": 0 },
+  "lift_name": "LiftA",
+  "available_floors": ["L1", "L2", "L3"],
+  "current_floor": "L1",
+  "destination_floor": "L3",
+  "door_state": 0,
+  "motion_state": 1,
+  "current_mode": 2,
+  "session_id": "fa_session_123"
+}

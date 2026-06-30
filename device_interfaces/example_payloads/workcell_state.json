@@ -1,0 +1,12 @@
+{
+  "timestamp": "2026-06-27T10:00:05Z",
+  "deviceId": "robot-arm-station-01",
+  "state": "busy",
+  "currentRequestId": "req-001",
+  "progress": 0.5,
+  "errors": [],
+  "data": {
+    "armState": "moving",
+    "gripperState": "open"
+  }
+}

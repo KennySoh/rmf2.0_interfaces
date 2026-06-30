@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "door_state",
+  "title": "DoorState",
+  "description": "Door operational state published on the device state topic (§7.2.2, Open-RMF aligned).",
+  "type": "object",
+  "required": ["door_time", "door_name", "current_mode"],
+  "properties": {
+    "door_time": { "$ref": "#/$defs/TimeValue" },
+    "door_name": {
+      "type": "string"
+    },
+    "current_mode": {
+      "type": "string",
+      "enum": ["MODE_CLOSED", "MODE_MOVING", "MODE_OPEN", "MODE_OFFLINE", "MODE_UNKNOWN"],
+      "description": "0=MODE_CLOSED 1=MODE_MOVING 2=MODE_OPEN 3=MODE_OFFLINE 4=MODE_UNKNOWN"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "TimeValue": {
+      "type": "object",
+      "required": ["sec", "nanosec"],
+      "properties": {
+        "sec": { "type": "integer" },
+        "nanosec": { "type": "integer", "minimum": 0, "maximum": 999999999 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

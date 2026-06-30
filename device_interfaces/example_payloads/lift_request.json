@@ -1,0 +1,8 @@
+{
+  "request_time": { "sec": 1750762800, "nanosec": 0 },
+  "session_id": "fa_session_123",
+  "lift_name": "LiftA",
+  "request_type": 1,
+  "destination_floor": "L3",
+  "door_state": 2
+}

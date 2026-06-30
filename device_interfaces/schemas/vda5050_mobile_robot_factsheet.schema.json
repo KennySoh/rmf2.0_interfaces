@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vda5050_mobile_robot_factsheet",
+  "title": "VDA5050MobileRobotFactsheet",
+  "description": "Static capabilities and identity of an AGV. Published on the factsheet topic once on startup or on a stateRequest instant action. Analogous to VDA5050 Factsheet.",
+  "type": "object",
+  "required": ["timestamp", "deviceId"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "deviceId": { "type": "string" },
+    "manufacturer": { "type": "string" },
+    "model": { "type": "string" },
+    "serialNumber": { "type": "string" },
+    "firmwareVersion": { "type": "string" },
+    "agvClass": {
+      "type": "string",
+      "enum": ["FORKLIFT", "CONVEYOR", "TUGGER", "CARRIER"],
+      "description": "VDA5050 AGV class"
+    },
+    "maxLoadMass": {
+      "type": "number",
+      "description": "Maximum payload in kg"
+    },
+    "maxSpeed": {
+      "type": "number",
+      "description": "Maximum travel speed in m/s"
+    },
+    "localizationTypes": {
+      "type": "array",
+      "description": "e.g. [\"NATURAL\", \"REFLECTOR\", \"RFID\", \"DMC\", \"SPOT\", \"GRID\"]",
+      "items": { "type": "string" }
+    },
+    "navigationTypes": {
+      "type": "array",
+      "description": "e.g. [\"PHYSICAL_LINE_GUIDED\", \"VIRTUAL_LINE_GUIDED\", \"AUTONOMOUS\"]",
+      "items": { "type": "string" }
+    },
+    "supportedActions": {
+      "type": "array",
+      "description": "Action types the AGV can execute, e.g. [\"pick\", \"drop\", \"startCharging\", \"waitForTrigger\"]",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": false
+}

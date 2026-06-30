@@ -1,0 +1,10 @@
+{
+  "timestamp": "2026-06-27T10:00:00Z",
+  "requestId": "req-001",
+  "deviceId": "robot-arm-station-01",
+  "request": "pick",
+  "params": {
+    "itemId": "part-001",
+    "sourceLocation": "tray-a"
+  }
+}

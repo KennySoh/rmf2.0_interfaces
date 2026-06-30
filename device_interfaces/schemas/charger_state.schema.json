@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "charger_state",
+  "title": "ChargerState",
+  "description": "Charger operational state published on the device state topic.",
+  "type": "object",
+  "required": ["timestamp", "deviceId", "state", "health"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "deviceId": { "type": "string" },
+    "state": {
+      "type": "string",
+      "enum": ["idle", "reserved", "charging", "error"],
+      "description": "idle = available; reserved = slot held for an incoming robot; charging = actively charging; error = fault"
+    },
+    "health": {
+      "type": "string",
+      "enum": ["normal", "warning", "error", "unknown"]
+    },
+    "assignedRobotId": {
+      "type": "string",
+      "description": "ID of the robot currently assigned to this charger. Omit when idle."
+    },
+    "chargingPowerWatts": {
+      "type": "number",
+      "minimum": 0
+    },
+    "chargingCurrentAmps": {
+      "type": "number",
+      "minimum": 0
+    },
+    "chargingVoltageVolts": {
+      "type": "number",
+      "minimum": 0
+    },
+    "batteryLevel": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Robot battery level as a fraction (0.0 – 1.0). Omit when idle."
+    }
+  },
+  "additionalProperties": false
+}

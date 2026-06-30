@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-06-24T10:00:00Z",
+  "deviceId": "S001",
+  "manufacturer": "Manufacturer",
+  "model": "MiR250",
+  "serialNumber": "SN-001234",
+  "firmwareVersion": "3.2.1",
+  "agvClass": "CARRIER",
+  "maxLoadMass": 250,
+  "maxSpeed": 2.0,
+  "localizationTypes": ["NATURAL"],
+  "navigationTypes": ["AUTONOMOUS"],
+  "supportedActions": [
+    "pick",
+    "drop",
+    "startCharging",
+    "stopCharging",
+    "waitForTrigger",
+    "cancelOrder",
+    "startPause",
+    "stopPause"
+  ]
+}

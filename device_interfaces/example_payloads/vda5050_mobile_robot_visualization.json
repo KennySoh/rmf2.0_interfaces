@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-06-24T10:00:04Z",
+  "deviceId": "S001",
+  "pose": {
+    "x": 5.1,
+    "y": 2.3,
+    "theta": 0.78,
+    "mapId": "artc-level-3",
+    "positionInitialized": true
+  },
+  "velocity": {
+    "vx": 0.5,
+    "vy": 0.0,
+    "omega": 0.02
+  }
+}

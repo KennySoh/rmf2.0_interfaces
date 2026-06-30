@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "door_request",
+  "title": "DoorRequest",
+  "description": "Mode change request published by the FCS on the device request topic (§7.2.3, Open-RMF aligned).",
+  "type": "object",
+  "required": ["request_time", "requester_id", "door_name", "requested_mode"],
+  "properties": {
+    "request_time": { "$ref": "#/$defs/TimeValue" },
+    "requester_id": {
+      "type": "string"
+    },
+    "door_name": {
+      "type": "string"
+    },
+    "requested_mode": {
+      "type": "string",
+      "enum": ["MODE_CLOSED", "MODE_MOVING", "MODE_OPEN", "MODE_OFFLINE", "MODE_UNKNOWN"],
+      "description": "0=MODE_CLOSED 1=MODE_MOVING 2=MODE_OPEN 3=MODE_OFFLINE 4=MODE_UNKNOWN"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "TimeValue": {
+      "type": "object",
+      "required": ["sec", "nanosec"],
+      "properties": {
+        "sec": { "type": "integer" },
+        "nanosec": { "type": "integer", "minimum": 0, "maximum": 999999999 }
+      },
+      "additionalProperties": false
+    }
+  }
+}

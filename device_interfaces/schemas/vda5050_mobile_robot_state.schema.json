@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vda5050_mobile_robot_state",
+  "title": "VDA5050MobileRobotState",
+  "description": "AGV state published by the VDA5050 controller on the device state topic (§7.2.7). Sourced from the vda5050_master_ros2 OrderStatus and PoseView topics.",
+  "type": "object",
+  "required": ["timestamp", "deviceId"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deviceId": {
+      "type": "string"
+    },
+    "manufacturer": {
+      "type": "string"
+    },
+    "pose": {
+      "type": "object",
+      "required": ["x", "y", "theta", "mapId", "positionInitialized"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "theta": { "type": "number", "description": "Heading in radians" },
+        "mapId": { "type": "string" },
+        "positionInitialized": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "order": {
+      "type": "object",
+      "required": ["assignmentId", "orderId", "orderUpdateId", "phase"],
+      "properties": {
+        "assignmentId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderUpdateId": { "type": "integer", "minimum": 0 },
+        "phase": {
+          "type": "string",
+          "enum": ["PHASE_NO_ORDER", "PHASE_ACCEPTED", "PHASE_RUNNING", "PHASE_COMPLETED", "PHASE_FAILED"]
+        },
+        "lastNodeId": { "type": "string" },
+        "lastNodeSequenceId": { "type": "integer", "minimum": 0 },
+        "nodesInBase": { "type": "integer", "minimum": 0 },
+        "nodesInHorizon": { "type": "integer", "minimum": 0 },
+        "driving": { "type": "boolean" },
+        "paused": { "type": "boolean" },
+        "newBaseRequest": { "type": "boolean" },
+        "pendingStitchCount": { "type": "integer", "minimum": 0 },
+        "actionStates": { "type": "array", "items": { "$ref": "#/$defs/ActionState" } },
+        "errors": { "type": "array", "items": { "$ref": "#/$defs/VdaError" } }
+      },
+      "additionalProperties": false
+    },
+    "assignment": {
+      "type": "object",
+      "required": ["assignmentId", "orderId", "orderUpdateId", "decision"],
+      "properties": {
+        "assignmentId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderUpdateId": { "type": "integer", "minimum": 0 },
+        "decision": {
+          "type": "string",
+          "enum": [
+            "ASSIGNED",
+            "STITCH_QUEUED",
+            "AGV_NOT_ONBOARDED",
+            "AGV_OFFLINE",
+            "AGV_NOT_READY",
+            "AGV_MODE_NOT_AUTO",
+            "AGV_POSITION_NOT_INITIALIZED",
+            "AGV_NO_STATE_YET",
+            "STITCH_REJECTED",
+            "INVALID_REQUEST"
+          ]
+        },
+        "errors": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ActionState": {
+      "type": "object",
+      "required": ["actionId", "actionStatus"],
+      "properties": {
+        "actionId": { "type": "string" },
+        "actionType": { "type": "string" },
+        "actionDescription": { "type": "string" },
+        "actionStatus": { "type": "string" },
+        "resultDescription": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "VdaError": {
+      "type": "object",
+      "required": ["errorType", "errorLevel"],
+      "properties": {
+        "errorType": { "type": "string" },
+        "errorLevel": { "type": "string" },
+        "errorDescription": { "type": "string" },
+        "errorReferences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["referenceKey", "referenceValue"],
+            "properties": {
+              "referenceKey": { "type": "string" },
+              "referenceValue": { "type": "string" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

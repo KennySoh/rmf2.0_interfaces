@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vda5050_mobile_robot_visualization",
+  "title": "VDA5050MobileRobotVisualization",
+  "description": "Lightweight real-time position snapshot published at higher frequency than state, intended for dashboard and map rendering. Analogous to VDA5050 Visualization — pose and velocity only, no order execution detail.",
+  "type": "object",
+  "required": ["timestamp", "deviceId"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "deviceId": { "type": "string" },
+    "pose": {
+      "type": "object",
+      "required": ["x", "y", "theta", "mapId", "positionInitialized"],
+      "properties": {
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "theta": { "type": "number", "description": "Heading in radians" },
+        "mapId": { "type": "string" },
+        "positionInitialized": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "velocity": {
+      "type": "object",
+      "properties": {
+        "vx": { "type": "number", "description": "Linear velocity in m/s" },
+        "vy": { "type": "number", "description": "Lateral velocity in m/s (omnidirectional AGVs)" },
+        "omega": { "type": "number", "description": "Rotational velocity in rad/s" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "device_connection",
+  "title": "DeviceConnection",
+  "description": "Heartbeat published by a Device Controller on behalf of each managed device (§7.2.1). Wire format carries only ONLINE or OFFLINE — CONNECTION_BROKEN is derived by the FCS from message staleness.",
+  "type": "object",
+  "required": ["timestamp", "deviceId", "connectionState"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deviceId": {
+      "type": "string"
+    },
+    "connectionState": {
+      "type": "string",
+      "enum": ["ONLINE", "OFFLINE"]
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,22 @@
+{
+  "customWorkcellTypeId": "robot-arm-station-v1",
+  "deviceType": "work_cell",
+  "subtype": "robot_arm_station",
+  "displayName": "Robot Arm Station",
+  "description": "A workcell with a robot arm for pick, place, and inspection tasks.",
+  "states": ["idle", "busy", "error", "offline"],
+  "requests": [
+    {
+      "request": "pick",
+      "requiredParams": ["itemId", "sourceLocation"]
+    },
+    {
+      "request": "place",
+      "requiredParams": ["itemId", "targetLocation"]
+    },
+    {
+      "request": "inspect",
+      "requiredParams": ["itemId", "inspectionRecipeId"]
+    }
+  ]
+}

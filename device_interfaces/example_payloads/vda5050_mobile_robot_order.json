@@ -1,0 +1,32 @@
+{
+  "timestamp": "2026-06-24T10:00:00Z",
+  "orderId": "order-abc123",
+  "orderUpdateId": 0,
+  "version": "2.0.0",
+  "nodes": [
+    {
+      "nodeId": "n1",
+      "sequenceId": 0,
+      "released": true,
+      "position": { "x": 5.1, "y": 2.3, "mapId": "artc-level-3" },
+      "actions": []
+    },
+    {
+      "nodeId": "n2",
+      "sequenceId": 2,
+      "released": true,
+      "position": { "x": 10.0, "y": 4.5, "mapId": "artc-level-3" },
+      "actions": [
+        {
+          "actionType": "waitForTrigger",
+          "actionId": "act-drop-001",
+          "blockingType": "SOFT",
+          "actionParameters": [
+            { "key": "duration", "value": "5.0" }
+          ]
+        }
+      ]
+    }
+  ],
+  "edges": []
+}

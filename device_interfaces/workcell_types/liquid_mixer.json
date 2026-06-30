@@ -1,0 +1,22 @@
+{
+  "customWorkcellTypeId": "liquid-mixer-v1",
+  "deviceType": "work_cell",
+  "subtype": "liquid_mixer",
+  "displayName": "Liquid Mixer",
+  "description": "A workcell for mixing liquid samples with configurable speed and duration.",
+  "states": ["idle", "mixing", "unloading", "error", "offline"],
+  "requests": [
+    {
+      "request": "start_mixing",
+      "requiredParams": ["recipeId", "volume_ml", "duration_s"]
+    },
+    {
+      "request": "stop_mixing",
+      "requiredParams": []
+    },
+    {
+      "request": "unload_sample",
+      "requiredParams": ["targetContainerId"]
+    }
+  ]
+}

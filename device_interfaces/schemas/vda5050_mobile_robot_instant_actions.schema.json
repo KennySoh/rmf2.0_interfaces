@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "vda5050_mobile_robot_instant_actions",
+  "title": "VDA5050MobileRobotInstantActions",
+  "description": "Immediate out-of-band commands sent by the FCS on the instantActions topic. Executed by the AGV immediately regardless of the active order. Common uses: cancelOrder, startPause, stopPause, stateRequest, logReport.",
+  "type": "object",
+  "required": ["actions"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Action" }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "ActionParameter": {
+      "type": "object",
+      "required": ["key", "value"],
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "Action": {
+      "type": "object",
+      "required": ["actionType", "actionId", "blockingType"],
+      "properties": {
+        "actionType": {
+          "type": "string",
+          "description": "e.g. cancelOrder, startPause, stopPause, stateRequest, logReport, startCharging, stopCharging"
+        },
+        "actionId": { "type": "string" },
+        "blockingType": { "type": "string", "enum": ["NONE", "SOFT", "HARD"] },
+        "actionDescription": { "type": "string" },
+        "actionParameters": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/ActionParameter" }
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

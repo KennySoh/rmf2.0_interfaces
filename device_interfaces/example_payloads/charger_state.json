@@ -1,0 +1,11 @@
+{
+  "timestamp": "2026-06-24T10:00:00Z",
+  "deviceId": "charger-01",
+  "state": "charging",
+  "health": "normal",
+  "assignedRobotId": "robot-01",
+  "chargingPowerWatts": 3200.0,
+  "chargingCurrentAmps": 16.0,
+  "chargingVoltageVolts": 200.0,
+  "batteryLevel": 0.45
+}

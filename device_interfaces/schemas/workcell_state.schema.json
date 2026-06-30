@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workcell_state",
+  "title": "WorkcellState",
+  "description": "State published by a workcell back to RMF2.0. The state field is validated against the Custom Workcell Type's allowed states. data is open for any device-type-specific telemetry.",
+  "type": "object",
+  "required": ["timestamp", "deviceId", "state"],
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "deviceId": {
+      "type": "string"
+    },
+    "state": {
+      "type": "string",
+      "description": "Current state, e.g. idle, busy, error, offline — must be one of the Custom Workcell Type's allowed states"
+    },
+    "currentRequestId": {
+      "type": "string",
+      "description": "ID of the request currently executing. Omit when idle."
+    },
+    "progress": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Fractional task completion (0.0 – 1.0)"
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Active error codes; empty when healthy"
+    },
+    "data": {
+      "type": "object",
+      "description": "Optional custom telemetry — open schema, any fields allowed",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

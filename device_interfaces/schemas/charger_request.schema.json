@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "charger_request",
+  "title": "ChargerRequest",
+  "description": "Command issued by the FCS to a charger controller on the device request topic.",
+  "type": "object",
+  "required": ["timestamp", "requesterId", "command"],
+  "properties": {
+    "timestamp": { "type": "string", "format": "date-time" },
+    "requesterId": {
+      "type": "string",
+      "description": "Session or system that issued the request, e.g. fa_session_123"
+    },
+    "requestId": {
+      "type": "string",
+      "description": "Optional correlation ID for tracking this request against a status response"
+    },
+    "command": {
+      "type": "string",
+      "enum": ["reserve", "start_charge", "stop_charge", "release"],
+      "description": "reserve = hold slot for incoming robot; start_charge = begin charging; stop_charge = stop charging; release = free the slot"
+    },
+    "robotId": {
+      "type": "string",
+      "description": "Robot this command applies to. Required for reserve and start_charge."
+    }
+  },
+  "additionalProperties": false
+}
