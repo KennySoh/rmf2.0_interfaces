@@ -1,0 +1,29 @@
+{
+  "task_type_id": "delivery",
+  "display_name": "Delivery Task",
+  "description": "Have a robot move an object from one location to another.",
+  "category": "manipulation",
+  "inputs_schema": {
+    "type": "object",
+    "required": ["robot_id", "from", "to", "object_id"],
+    "properties": {
+      "robot_id": {
+        "type": "string",
+        "description": "Robot assigned to perform the delivery."
+      },
+      "from": {
+        "type": "string",
+        "description": "Pickup location."
+      },
+      "to": {
+        "type": "string",
+        "description": "Drop-off location."
+      },
+      "object_id": {
+        "type": "string",
+        "description": "The object to deliver."
+      }
+    },
+    "additionalProperties": false
+  }
+}

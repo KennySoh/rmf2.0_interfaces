@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task_type",
+  "title": "TaskType",
+  "description": "A catalog entry defining a single task type. Analogous to a device_interfaces workcell type: it names the task and describes the inputs a workflow task of this type must provide. Files live in task_types/ and are referenced by a workflow task's `task_type`.",
+  "type": "object",
+  "required": ["task_type_id", "display_name", "description", "inputs_schema"],
+  "properties": {
+    "task_type_id": {
+      "type": "string",
+      "description": "Unique id of the task type. Matches the value used in a workflow task's `task_type` (e.g. \"pickup\")."
+    },
+    "display_name": {
+      "type": "string",
+      "description": "Human-readable name shown to operators (e.g. \"Pickup Task\")."
+    },
+    "description": {
+      "type": "string",
+      "description": "What this task does."
+    },
+    "category": {
+      "type": "string",
+      "description": "Optional grouping, e.g. \"navigation\", \"manipulation\", \"inspection\"."
+    },
+    "inputs_schema": {
+      "type": "object",
+      "description": "A JSON Schema describing the `inputs` a workflow task of this type must provide. A workflow task's `inputs` object is validated against this."
+    },
+    "outputs_schema": {
+      "type": "object",
+      "description": "Optional JSON Schema describing the `outputs` this task produces."
+    }
+  },
+  "additionalProperties": false
+}

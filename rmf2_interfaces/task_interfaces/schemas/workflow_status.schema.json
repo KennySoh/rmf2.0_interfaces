@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workflow_status",
+  "title": "WorkflowStatus",
+  "description": "Status the Task Orchestrator publishes to its status endpoint. Acceptance/rejection and ongoing progress of a workflow run are both reported here.",
+  "type": "object",
+  "required": ["run_id", "state", "timestamp"],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "description": "The workflow run this status is about."
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "The workflow definition this run was started from."
+    },
+    "state": {
+      "type": "string",
+      "description": "Current state of the run. `REJECTED` reports a command that could not be accepted.",
+      "enum": ["RUNNING", "PAUSED", "COMPLETED", "FAILED", "CANCELLED", "REJECTED"]
+    },
+    "current_task_id": {
+      "type": "string",
+      "description": "task_id of the task currently executing, when running."
+    },
+    "completed_task_ids": {
+      "type": "array",
+      "description": "task_ids of the tasks completed so far in this run.",
+      "items": { "type": "string" }
+    },
+    "timestamp": {
+      "type": "string",
+      "description": "ISO 8601 time this status was produced.",
+      "format": "date-time",
+      "examples": [
+        "2025-01-09T15:30:15Z"
+      ]
+    },
+    "error": {
+      "type": "string",
+      "description": "Failure or rejection reason. Present for failed/rejected states."
+    }
+  },
+  "additionalProperties": false
+}

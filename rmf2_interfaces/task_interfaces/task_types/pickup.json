@@ -1,0 +1,25 @@
+{
+  "task_type_id": "pickup",
+  "display_name": "Pickup Task",
+  "description": "Have a robot pick up an object at a location.",
+  "category": "manipulation",
+  "inputs_schema": {
+    "type": "object",
+    "required": ["robot_id", "location", "object_id"],
+    "properties": {
+      "robot_id": {
+        "type": "string",
+        "description": "Robot assigned to perform the pickup."
+      },
+      "location": {
+        "type": "string",
+        "description": "Where the object is picked up from."
+      },
+      "object_id": {
+        "type": "string",
+        "description": "The object to pick up."
+      }
+    },
+    "additionalProperties": false
+  }
+}
