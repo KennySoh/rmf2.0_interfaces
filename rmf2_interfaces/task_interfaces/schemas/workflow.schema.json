@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workflow",
+  "title": "Workflow",
+  "description": "A high-level workflow: a graph of task intents. Each task references a task_type defined in the task_types/ catalog; a task's `inputs` are open here and validated out-of-band against the matching catalog entry's `inputsSchema`.",
+  "type": "object",
+  "required": ["workflow_id", "version", "tasks"],
+  "properties": {
+    "workflow_id": {
+      "type": "string",
+      "description": "Unique identifier of the workflow."
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the workflow definition (e.g. \"0.1.0\")."
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of what this workflow does."
+    },
+    "tasks": {
+      "type": "array",
+      "description": "The tasks that make up the workflow, wired together via each task's `next`.",
+      "items": {
+        "type": "object",
+        "required": ["task_id", "task_type", "next"],
+        "properties": {
+          "task_id": {
+            "type": "string",
+            "description": "Unique identifier of the task within this workflow. Referenced by other tasks' `next`."
+          },
+          "task_type": {
+            "type": "string",
+            "description": "Name of the task type. Resolves to a catalog entry in task_types/<task_type>.json, which defines the required inputs."
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Business-level inputs to the task. Open here; validated out-of-band against the task_type catalog entry's `inputsSchema`. Values may be any JSON type.",
+            "additionalProperties": true
+          },
+          "outputs": {
+            "type": "object",
+            "description": "Outputs produced by the task, referenceable by downstream tasks. Open here; validated against the catalog entry's `outputsSchema` when present.",
+            "additionalProperties": true
+          },
+          "next": {
+            "type": "array",
+            "description": "task_id(s) to execute after this one. Empty array denotes a terminal task.",
+            "items": { "type": "string" }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

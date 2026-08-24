@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "command",
+  "title": "Command",
+  "description": "A command the Task Orchestrator receives. Per-command expectations (enforced by the TO, not this schema): submit needs `payload` or `workflow_id`; cancel needs `run_id`; pause and resume are task-based and need `run_id` and `task_id`.",
+  "type": "object",
+  "required": ["command"],
+  "properties": {
+    "command": {
+      "type": "string",
+      "description": "The action to perform.",
+      "enum": ["START", "CANCEL", "PAUSE", "RESUME"]
+    },
+    "run_id": {
+      "type": "string",
+      "description": "The workflow run being targeted. Required for CANCEL/PAUSE/RESUME. For START it is optional; the TO generates one if absent."
+    },
+    "task_id": {
+      "type": "string",
+      "description": "The task within the run to target. Required for PAUSE/RESUME, which act on a single task rather than the whole workflow."
+    },
+    "workflow_id": {
+      "type": "string",
+      "description": "START-by-reference: id of a workflow definition the TO already holds."
+    },
+    "payload": {
+      "type": "object",
+      "description": "START-by-value: the inline workflow definition (see workflow.schema.json).",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}

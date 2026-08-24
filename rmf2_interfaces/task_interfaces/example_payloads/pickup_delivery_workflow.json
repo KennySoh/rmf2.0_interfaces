@@ -1,0 +1,28 @@
+{
+  "workflow_id": "wf-pickup-delivery-001",
+  "version": "0.1.0",
+  "description": "Pick up an object at Station A, then deliver it from Station A to Station B.",
+  "tasks": [
+    {
+      "task_id": "t1",
+      "task_type": "pickup",
+      "inputs": {
+        "robot_id": "r1234",
+        "location": "Station A",
+        "object_id": "widget-42"
+      },
+      "next": ["t2"]
+    },
+    {
+      "task_id": "t2",
+      "task_type": "delivery",
+      "inputs": {
+        "robot_id": "r1234",
+        "from": "Station A",
+        "to": "Station B",
+        "object_id": "widget-42"
+      },
+      "next": []
+    }
+  ]
+}
