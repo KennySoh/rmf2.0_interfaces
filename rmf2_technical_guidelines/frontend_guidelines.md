@@ -12,7 +12,8 @@ These are **not strict rules**. Teams may deviate when there is a clear technica
 | -------------------- | ------------------------------------------------ | ----------------------------- |
 | Language & Framework | TypeScript + React                               | https://react.dev             |
 | Project Structure    | Feature-Sliced Design                            | https://feature-sliced.design |
-| Build Tool           | Vite                                             | https://vite.dev              |
+| Package Manager      | pnpm                                             | https://pnpm.io               |
+| Build/Dev Tool       | Vite                                             | https://vite.dev              |
 | Styling              | Tailwind CSS                                     | https://tailwindcss.com       |
 | Component Library    | shadcn/ui                                        | https://ui.shadcn.com         |
 | Routing              | React Router                                     | https://reactrouter.com       |
