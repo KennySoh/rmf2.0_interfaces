@@ -1,0 +1,142 @@
+# MARVEL Gateway: requests for the VS Code REST Client
+#
+# The gateway (src/marvel_gateway) is a plain nginx reverse proxy: one entry point
+# for the MARVEL UI's backends, with CORS handled there and nowhere else.
+# Each prefix is stripped and the rest is forwarded unchanged:
+#
+#   /experiment/            -> Experiment Service     (docs/experiment/experiment.http)
+#   /orchestrator/          -> Task Orchestrator      (docs/task_orchestrator/to.http)
+#   /dm/                    -> Device manager         (src/rmf2_device_manager)
+#   /scheduler/             -> Scheduler API          (docs/scheduler/scheduler.http)
+#   /equipment/<kind>/      -> Equipment status       (docs/equipment/equipment.http)
+#   /mir/                   -> MiR250 robot           (docs/mir/mir.http)
+#
+# e.g. GET {{gw}}/experiment/api/experiments -> GET ${EXPERIMENT_URL}/api/experiments
+#
+# This file only checks the gateway: routing, CORS and auth injection. Full request
+# bodies and sample responses are in each backend's own .http file; put {{gw}}/<prefix>
+# in front of any of them to send it through the gateway.
+#
+# An unreachable backend gives 502. A path with no route gives 404
+# {"error":"no route for this path"}.
+
+@gw = http://localhost:8088
+@origin = http://localhost:5173
+@workflow_id = 2026100001
+
+
+### ======================================== 1. GATEWAY
+
+### GATEWAY 1 — Health (answered by nginx itself, no backend involved)
+GET {{gw}}/health
+
+# Sample response: 200 OK
+# {"status":"ok"}
+
+### GATEWAY 2 — Unknown path
+GET {{gw}}/nope
+
+# Sample response: 404 Not Found
+# {"error":"no route for this path"}
+
+### ======================================== 2. EXPERIMENT SERVICE (/experiment)
+
+### EXPERIMENT 1 — Health
+GET {{gw}}/experiment/health
+
+# Sample response: 200 OK
+# {"status":"ok","database":"ok"}
+
+### EXPERIMENT 2 — List instruments
+GET {{gw}}/experiment/api/instruments
+
+### EXPERIMENT 3 — List experiments
+GET {{gw}}/experiment/api/experiments
+
+### EXPERIMENT 4 — Create an experiment (a write through the gateway)
+# @name createDsc
+POST {{gw}}/experiment/api/experiments
+Content-Type: application/json
+Origin: {{origin}}
+
+{"name": "Gateway smoke test", "instrument_id": "DSC-001"}
+
+# Sample response: 201 Created
+# {"experiment_id":"EXP-001",...,"status":"draft","runs":[]}
+
+### EXPERIMENT 5 — Get the experiment just created
+GET {{gw}}/experiment/api/experiments/{{createDsc.response.body.$.experiment_id}}
+
+
+### ======================================== 3. TASK ORCHESTRATOR (/orchestrator)
+
+### ORCHESTRATOR 1 — Health (200 with an empty body)
+GET {{gw}}/orchestrator/health_check
+
+### ORCHESTRATOR 2 — Workflow status: all workflows
+GET {{gw}}/orchestrator/api/workflows/status
+
+### ORCHESTRATOR 3 — Workflow status: one workflow
+GET {{gw}}/orchestrator/api/workflows/status?workflow_id={{workflow_id}}
+
+### ORCHESTRATOR 4 — Workflow status events (SSE)
+# The gateway turns buffering off for /orchestrator, so events arrive live and the stream
+# stays open up to 1 h. REST Client waits for the end of the response; to watch it:
+#   curl -N http://localhost:8088/orchestrator/api/workflows/events
+GET {{gw}}/orchestrator/api/workflows/events
+Accept: text/event-stream
+
+### ORCHESTRATOR 5 — Node registry
+GET {{gw}}/orchestrator/api/registry
+
+
+### ======================================== 4. EQUIPMENT STATUS (/equipment/<kind>)
+# One status server per instrument PC. The gateway gives up after 5 s (the UI after 3 s).
+
+### EQUIPMENT 1 — X3DSC health
+GET {{gw}}/equipment/x3dsc/health
+
+### EQUIPMENT 2 — X3DSC status
+GET {{gw}}/equipment/x3dsc/status
+Accept: application/json
+
+# Sample response: 200 OK
+# {"kind":"x3dsc","up":true,"activity":"Idle","sampled_at":"...","parameters":{...}}
+
+### EQUIPMENT 3 — SDT status
+GET {{gw}}/equipment/sdt/status
+Accept: application/json
+
+### EQUIPMENT 4 — GPC status
+GET {{gw}}/equipment/gpc/status
+Accept: application/json
+
+### EQUIPMENT 5 — FTIR status
+GET {{gw}}/equipment/ftir/status
+Accept: application/json
+
+
+### ======================================== 5. SCHEDULER (/scheduler)
+# The scheduler API's routes are under /api, so /scheduler/api/... -> ${SCHEDULER_URL}/api/...
+# Swagger UI through the gateway: http://localhost:8088/scheduler/swagger/index.html
+GET {{gw}}/scheduler/api/robotics/experiments
+Accept: application/json
+
+
+### SCHEDULER 1 — Schedule an experiment order
+POST {{gw}}/scheduler/api/scheduling-automation/CreateAndSchedule
+Accept: text/plain
+Content-Type: application/json
+
+{
+  "experiments": [
+    {
+      "experimentType": "DSC",
+      "experimentId": "00003"
+    },
+    {
+      "experimentType": "FTIR",
+      "experimentId": "00001"
+    }
+  ]
+}
