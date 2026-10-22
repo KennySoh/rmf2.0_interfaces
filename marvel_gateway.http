@@ -13,16 +13,19 @@
 #
 # e.g. GET {{gw}}/experiment/api/experiments -> GET ${EXPERIMENT_URL}/api/experiments
 #
-# This file only checks the gateway: routing, CORS and auth injection. Full request
-# bodies and sample responses are in each backend's own .http file; put {{gw}}/<prefix>
-# in front of any of them to send it through the gateway.
+# This file checks the gateway (routing, CORS and auth injection) and runs the
+# Experiment Service setup + DSC full flow through it. Other backends' full request
+# bodies are in their own .http files; put {{gw}}/<prefix> in front to use the gateway.
 #
 # An unreachable backend gives 502. A path with no route gives 404
 # {"error":"no route for this path"}.
 
-@gw = http://localhost:8088
-@origin = http://localhost:5173
+@gw = http://192.168.50.110:8088
+@origin = http://192.168.50.110:5173
 @workflow_id = 2026100001
+@dscId = {{createDsc.response.body.$.experiment_id}}
+@dscRunId = {{addDscRun.response.body.$.runs[0].run_id}}
+@dscRun2Id = {{addDscRun2.response.body.$.runs[1].run_id}}
 
 
 ### ======================================== 1. GATEWAY
@@ -40,83 +43,247 @@ GET {{gw}}/nope
 # {"error":"no route for this path"}
 
 ### ======================================== 2. EXPERIMENT SERVICE (/experiment)
+# Setup + the DSC full flow from docs/experiment/experiment.http, sent through the gateway.
+# Send top to bottom: "Create" stores its experiment_id for the requests after it.
 
-### EXPERIMENT 1 — Health
+### ---------------------------------------- 2a. SETUP
+
+### SETUP 1 — Health check
 GET {{gw}}/experiment/health
 
 # Sample response: 200 OK
 # {"status":"ok","database":"ok"}
 
-### EXPERIMENT 2 — List instruments
+### SETUP 2 — List instruments
 GET {{gw}}/experiment/api/instruments
 
-### EXPERIMENT 3 — List experiments
-GET {{gw}}/experiment/api/experiments
+# Sample response: 200 OK
+# {"instruments":[{"instrument_id":"DSC-001","name":"DSC Machine 1","instrument_type":"DSC","tray_type":"SLOT54","status":"active"}, ...]}
 
-### EXPERIMENT 4 — Create an experiment (a write through the gateway)
+### SETUP 3 — Get an instrument's run method template (a starting run_method)
+GET {{gw}}/experiment/api/instruments/DSC-001/run-method-templates
+
+# Sample response: 200 OK
+# {"instrument_id":"DSC-001","run_method_templates":[{"template_id":"DSC-DEMO","name":"demo experiment","run_method":{ ...docs/xdsc.md example... }}]}
+
+### SETUP 4 — List tray types
+GET {{gw}}/experiment/api/tray-types
+
+# Sample response: 200 OK
+# {"tray_types":[{"tray_type":"PLATE96","capacity":96,"positions":"A1-H12"},{"tray_type":"SLOT30","capacity":30,"positions":"1-30"},{"tray_type":"SLOT54","capacity":54,"positions":"1-54"}]}
+
+### SETUP 5 — Register a DSC tray
+POST {{gw}}/experiment/api/trays
+Content-Type: application/json
+
+{"qr_code": "QR-SLOT54-004", "tray_type": "SLOT54"}
+
+# Sample response: 201 Created
+# {"tray_id":"TRAY-001","qr_code":"QR-SLOT54-001","tray_type":"SLOT54","capacity":54}
+# Errors: 409 QR code already registered · 422 unknown tray_type
+
+### SETUP 6 — Register a TGA tray
+POST {{gw}}/experiment/api/trays
+Content-Type: application/json
+
+{"qr_code": "QR-SLOT30-003", "tray_type": "SLOT30"}
+
+### SETUP 7 — Register an FTIR plate
+POST {{gw}}/experiment/api/trays
+Content-Type: application/json
+
+{"qr_code": "QR-PLATE96-001", "tray_type": "PLATE96"}
+
+### SETUP 8 — List trays
+GET {{gw}}/experiment/api/trays
+
+# Sample response: 200 OK
+# {"trays":[{"tray_id":"TRAY-001","qr_code":"QR-SLOT54-001","tray_type":"SLOT54","capacity":54}, ...]}
+
+
+### ---------------------------------------- 2b. DSC (full flow)
+
+### DSC 1 — Create
 # @name createDsc
 POST {{gw}}/experiment/api/experiments
 Content-Type: application/json
-Origin: {{origin}}
 
-{"name": "Gateway smoke test", "instrument_id": "DSC-001"}
+{"name": "Polymer DSC Characterization", "instrument_id": "DSC-001"}
 
 # Sample response: 201 Created
-# {"experiment_id":"EXP-001",...,"status":"draft","runs":[]}
+# {"experiment_id":"EXP-001","experiment_type":"material_characterization","name":"Polymer DSC Characterization","instrument_id":"DSC-001","tray":null,"status":"draft","runs":[]}
+# Errors: 404 unknown instrument · 422 instrument not active
 
-### EXPERIMENT 5 — Get the experiment just created
-GET {{gw}}/experiment/api/experiments/{{createDsc.response.body.$.experiment_id}}
-
-
-### ======================================== 3. TASK ORCHESTRATOR (/orchestrator)
-
-### ORCHESTRATOR 1 — Health (200 with an empty body)
-GET {{gw}}/orchestrator/health_check
-
-### ORCHESTRATOR 2 — Workflow status: all workflows
-GET {{gw}}/orchestrator/api/workflows/status
-
-### ORCHESTRATOR 3 — Workflow status: one workflow
-GET {{gw}}/orchestrator/api/workflows/status?workflow_id={{workflow_id}}
-
-### ORCHESTRATOR 4 — Workflow status events (SSE)
-# The gateway turns buffering off for /orchestrator, so events arrive live and the stream
-# stays open up to 1 h. REST Client waits for the end of the response; to watch it:
-#   curl -N http://localhost:8088/orchestrator/api/workflows/events
-GET {{gw}}/orchestrator/api/workflows/events
-Accept: text/event-stream
-
-### ORCHESTRATOR 5 — Node registry
-GET {{gw}}/orchestrator/api/registry
-
-
-### ======================================== 4. EQUIPMENT STATUS (/equipment/<kind>)
-# One status server per instrument PC. The gateway gives up after 5 s (the UI after 3 s).
-
-### EQUIPMENT 1 — X3DSC health
-GET {{gw}}/equipment/x3dsc/health
-
-### EQUIPMENT 2 — X3DSC status
-GET {{gw}}/equipment/x3dsc/status
-Accept: application/json
+### DSC 2 — Get
+GET {{gw}}/experiment/api/experiments/{{dscId}}
 
 # Sample response: 200 OK
-# {"kind":"x3dsc","up":true,"activity":"Idle","sampled_at":"...","parameters":{...}}
 
-### EQUIPMENT 3 — SDT status
-GET {{gw}}/equipment/sdt/status
-Accept: application/json
+### DSC 3 — Link the tray (scan its QR code; optional)
+PUT {{gw}}/experiment/api/experiments/{{dscId}}/tray
+Content-Type: application/json
 
-### EQUIPMENT 4 — GPC status
-GET {{gw}}/equipment/gpc/status
-Accept: application/json
+{"qr_code": "QR-SLOT54-001"}
 
-### EQUIPMENT 5 — FTIR status
-GET {{gw}}/equipment/ftir/status
-Accept: application/json
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "tray":{"tray_id":"TRAY-001","qr_code":"QR-SLOT54-001","tray_type":"SLOT54","capacity":54},"status":"draft","runs":[]}
+# Errors: 404 unknown QR code · 422 wrong tray type · 409 not draft
+
+### DSC 4 — Add a run (the docs/xdsc.md example)
+# @name addDscRun
+POST {{gw}}/experiment/api/experiments/{{dscId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "sampleInfo": {
+      "sampleNameA": "nameA",
+      "sampleNameB": "nameB",
+      "sampleNameC": "nameC",
+      "samplePanA": {"trayPosition": 12, "sampleMass": 5, "panMass": 42.7},
+      "samplePanB": {"trayPosition": 13, "sampleMass": 4.8, "panMass": 43.5},
+      "samplePanC": {"trayPosition": 14, "sampleMass": 5.1, "panMass": 43.7},
+      "useSensorA": true,
+      "useSensorB": true,
+      "useSensorC": true,
+      "referencePanTrayPosition": 15,
+      "operator": "operator",
+      "project": "project",
+      "notes": ""
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "DSC-<SAMPLENAME>"
+    },
+    "procedure": {
+      "procedureName": "demo experiment",
+      "testType": "Custom",
+      "segments": [
+        {"type": "Data", "dataOn": true},
+        {"type": "Equilibrate", "temperatureC": -60},
+        {"type": "Isothermal", "isothermTimeMin": 5},
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 190},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ]
+    }
+  }
+}
+
+# Sample response: 201 Created
+# {"experiment_id":"EXP-001", ..., "status":"draft","runs":[{"run_id":"RUN-001","status":"pending","run_method":{ ...as sent... },"run_method_str":"{...}"}]}
+# Errors: 409 not draft · 422 lists every invalid field, and nothing is saved
+
+### DSC 4b — Add a second run (appended; runs may share slots, each run is checked on its own)
+# @name addDscRun2
+POST {{gw}}/experiment/api/experiments/{{dscId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "sampleInfo": {
+      "sampleNameA": "nameA",
+      "sampleNameB": "nameB",
+      "sampleNameC": "nameC",
+      "samplePanA": {"trayPosition": 16, "sampleMass": 5, "panMass": 42.7},
+      "samplePanB": {"trayPosition": 17, "sampleMass": 4.8, "panMass": 43.5},
+      "samplePanC": {"trayPosition": 18, "sampleMass": 5.1, "panMass": 43.7},
+      "useSensorA": true,
+      "useSensorB": true,
+      "useSensorC": true,
+      "referencePanTrayPosition": 15,
+      "operator": "operator",
+      "project": "project",
+      "notes": ""
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "DSC-<SAMPLENAME>"
+    },
+    "procedure": {
+      "procedureName": "demo experiment",
+      "testType": "Custom",
+      "segments": [
+        {"type": "Data", "dataOn": true},
+        {"type": "Equilibrate", "temperatureC": -60},
+        {"type": "Isothermal", "isothermTimeMin": 5},
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 190},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ]
+    }
+  }
+}
+
+# Sample response: 201 Created
+# {"experiment_id":"EXP-001", ..., "runs":[{"run_id":"RUN-001", ...},{"run_id":"RUN-002", ...}]}
+# Errors: 422 on run_method.sampleInfo.samplePanA.trayPosition if it is off the tray or used twice in this run
+
+### DSC 4c — Edit a run (keeps its run_id and place)
+PUT {{gw}}/experiment/api/experiments/{{dscId}}/runs/{{dscRunId}}
+Content-Type: application/json
+
+{
+  "run_method": {
+    "sampleInfo": {
+      "sampleNameA": "nameA",
+      "sampleNameB": "nameB",
+      "sampleNameC": "nameC",
+      "samplePanA": {"trayPosition": 12, "sampleMass": 5, "panMass": 42.7},
+      "samplePanB": {"trayPosition": 13, "sampleMass": 4.8, "panMass": 43.5},
+      "samplePanC": {"trayPosition": 14, "sampleMass": 5.1, "panMass": 43.7},
+      "useSensorA": true,
+      "useSensorB": true,
+      "useSensorC": true,
+      "referencePanTrayPosition": 15,
+      "operator": "operator",
+      "project": "project",
+      "notes": "re-weighed pan B"
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "DSC-<SAMPLENAME>"
+    },
+    "procedure": {
+      "procedureName": "demo experiment",
+      "testType": "Custom",
+      "segments": [
+        {"type": "Data", "dataOn": true},
+        {"type": "Equilibrate", "temperatureC": -60},
+        {"type": "Isothermal", "isothermTimeMin": 5},
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 190},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ]
+    }
+  }
+}
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "runs":[{"run_id":"RUN-001","status":"pending","run_method":{ ..."notes":"re-weighed pan B"... },"run_method_str":"{...}"}, ...]}
+# Errors: 404 not a run of this experiment · 409 not draft · 422 invalid field
+
+### DSC 4d — Delete a run
+DELETE {{gw}}/experiment/api/experiments/{{dscId}}/runs/{{dscRun2Id}}
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "runs":[{"run_id":"RUN-001", ...}]}
+# Errors: 404 not a run of this experiment · 409 not draft
+
+### DSC 5 — Submit (marks it ready; does not run the instrument)
+POST {{gw}}/experiment/api/experiments/{{dscId}}/submit
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "status":"ready","runs":[ ... ]}
+# Errors: 409 already submitted · 422 no runs
+
+### DSC 6 — Editing after submit is rejected
+POST {{gw}}/experiment/api/experiments/{{dscId}}/runs
+Content-Type: application/json
+
+{"run_method": {}}
+
+# Sample response: 409 Conflict
 
 
-### ======================================== 5. SCHEDULER (/scheduler)
+### ======================================== 3. SCHEDULER (/scheduler)
 # The scheduler API's routes are under /api, so /scheduler/api/... -> ${SCHEDULER_URL}/api/...
 # Swagger UI through the gateway: http://localhost:8088/scheduler/swagger/index.html
 GET {{gw}}/scheduler/api/robotics/experiments
@@ -140,3 +307,51 @@ Content-Type: application/json
     }
   ]
 }
+
+
+### ======================================== 4. TASK ORCHESTRATOR (/orchestrator)
+
+### ORCHESTRATOR 1 — Health (200 with an empty body)
+GET {{gw}}/orchestrator/health_check
+
+### ORCHESTRATOR 2 — Workflow status: all workflows
+GET {{gw}}/orchestrator/api/workflows/status
+
+### ORCHESTRATOR 3 — Workflow status: one workflow
+GET {{gw}}/orchestrator/api/workflows/status?workflow_id={{workflow_id}}
+
+### ORCHESTRATOR 4 — Workflow status events (SSE)
+# The gateway turns buffering off for /orchestrator, so events arrive live and the stream
+# stays open up to 1 h. REST Client waits for the end of the response; to watch it:
+#   curl -N http://localhost:8088/orchestrator/api/workflows/events
+GET {{gw}}/orchestrator/api/workflows/events
+Accept: text/event-stream
+
+### ORCHESTRATOR 5 — Node registry
+GET {{gw}}/orchestrator/api/registry
+
+
+### ======================================== 5. EQUIPMENT STATUS (/equipment/<kind>)
+# One status server per instrument PC. The gateway gives up after 5 s (the UI after 3 s).
+
+### EQUIPMENT 1 — X3DSC health
+GET {{gw}}/equipment/x3dsc/health
+
+### EQUIPMENT 2 — X3DSC status
+GET {{gw}}/equipment/x3dsc/status
+Accept: application/json
+
+# Sample response: 200 OK
+# {"kind":"x3dsc","up":true,"activity":"Idle","sampled_at":"...","parameters":{...}}
+
+### EQUIPMENT 3 — SDT status
+GET {{gw}}/equipment/sdt/status
+Accept: application/json
+
+### EQUIPMENT 4 — GPC status
+GET {{gw}}/equipment/gpc/status
+Accept: application/json
+
+### EQUIPMENT 5 — FTIR status
+GET {{gw}}/equipment/ftir/status
+Accept: application/json
