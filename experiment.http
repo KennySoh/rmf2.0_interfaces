@@ -1,0 +1,378 @@
+# MARVEL Experiment Service — requests for the VS Code REST Client
+#
+# How to use: start the API (see README), then send the requests top to bottom.
+# Each "Create" stores its experiment_id, so the next requests use it.
+#
+# Every instrument follows the same steps: Create → Link tray (optional) → Add runs → Submit.
+# Positions are checked against the instrument's tray type, so a tray can be linked any time before submit.
+# Every experiment write returns the whole experiment, the same as "Get".
+# A run_method is exactly the instrument's doc shape:
+#   DSC → docs/xdsc.md   TGA → docs/sdt.md   FTIR → docs/ftir.md   GPC → {}
+
+@baseUrl = http://192.168.50.110:8000/api
+@dscId = {{createDsc.response.body.$.experiment_id}}
+@tgaId = {{createTga.response.body.$.experiment_id}}
+@ftirId = {{createFtir.response.body.$.experiment_id}}
+@gpcId = {{createGpc.response.body.$.experiment_id}}
+@dscRunId = {{addDscRun.response.body.$.runs[0].run_id}}
+@dscRun2Id = {{addDscRun2.response.body.$.runs[1].run_id}}
+
+
+### ======================================== 1. SETUP
+
+### SETUP 1 — Health check
+GET http://localhost:8000/health
+
+# Sample response: 200 OK
+# {"status":"ok","database":"ok"}
+
+### SETUP 2 — List instruments
+GET {{baseUrl}}/instruments
+
+# Sample response: 200 OK
+# {"instruments":[{"instrument_id":"DSC-001","name":"DSC Machine 1","instrument_type":"DSC","tray_type":"SLOT54","status":"active"}, ...]}
+
+### SETUP 3 — Get an instrument's run method template (a starting run_method)
+GET {{baseUrl}}/instruments/DSC-001/run-method-templates
+
+# Sample response: 200 OK
+# {"instrument_id":"DSC-001","run_method_templates":[{"template_id":"DSC-DEMO","name":"demo experiment","run_method":{ ...docs/xdsc.md example... }}]}
+
+### SETUP 4 — List tray types
+GET {{baseUrl}}/tray-types
+
+# Sample response: 200 OK
+# {"tray_types":[{"tray_type":"PLATE96","capacity":96,"positions":"A1-H12"},{"tray_type":"SLOT30","capacity":30,"positions":"1-30"},{"tray_type":"SLOT54","capacity":54,"positions":"1-54"}]}
+
+### SETUP 5 — Register a DSC tray
+POST {{baseUrl}}/trays
+Content-Type: application/json
+
+{"qr_code": "QR-SLOT54-004", "tray_type": "SLOT54"}
+
+# Sample response: 201 Created
+# {"tray_id":"TRAY-001","qr_code":"QR-SLOT54-001","tray_type":"SLOT54","capacity":54}
+# Errors: 409 QR code already registered · 422 unknown tray_type
+
+### SETUP 6 — Register a TGA tray
+POST {{baseUrl}}/trays
+Content-Type: application/json
+
+{"qr_code": "QR-SLOT30-003", "tray_type": "SLOT30"}
+
+### SETUP 7 — Register an FTIR plate
+POST {{baseUrl}}/trays
+Content-Type: application/json
+
+{"qr_code": "QR-PLATE96-001", "tray_type": "PLATE96"}
+
+### SETUP 8 — List trays
+GET {{baseUrl}}/trays
+
+# Sample response: 200 OK
+# {"trays":[{"tray_id":"TRAY-001","qr_code":"QR-SLOT54-001","tray_type":"SLOT54","capacity":54}, ...]}
+
+
+### ======================================== 2. DSC (full flow)
+
+### DSC 1 — Create
+# @name createDsc
+POST {{baseUrl}}/experiments
+Content-Type: application/json
+
+{"name": "Polymer DSC Characterization", "instrument_id": "DSC-001"}
+
+# Sample response: 201 Created
+# {"experiment_id":"EXP-001","experiment_type":"material_characterization","name":"Polymer DSC Characterization","instrument_id":"DSC-001","tray":null,"status":"draft","runs":[]}
+# Errors: 404 unknown instrument · 422 instrument not active
+
+### DSC 2 — Get
+GET {{baseUrl}}/experiments/{{dscId}}
+
+# Sample response: 200 OK
+
+### DSC 3 — Link the tray (scan its QR code; optional)
+PUT {{baseUrl}}/experiments/{{dscId}}/tray
+Content-Type: application/json
+
+{"qr_code": "QR-SLOT54-001"}
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "tray":{"tray_id":"TRAY-001","qr_code":"QR-SLOT54-001","tray_type":"SLOT54","capacity":54},"status":"draft","runs":[]}
+# Errors: 404 unknown QR code · 422 wrong tray type · 409 not draft
+
+### DSC 4 — Add a run (the docs/xdsc.md example)
+# @name addDscRun
+POST {{baseUrl}}/experiments/{{dscId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "sampleInfo": {
+      "sampleNameA": "nameA",
+      "sampleNameB": "nameB",
+      "sampleNameC": "nameC",
+      "samplePanA": {"trayPosition": 12, "sampleMass": 5, "panMass": 42.7},
+      "samplePanB": {"trayPosition": 13, "sampleMass": 4.8, "panMass": 43.5},
+      "samplePanC": {"trayPosition": 14, "sampleMass": 5.1, "panMass": 43.7},
+      "useSensorA": true,
+      "useSensorB": true,
+      "useSensorC": true,
+      "referencePanTrayPosition": 15,
+      "operator": "operator",
+      "project": "project",
+      "notes": ""
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "DSC-<SAMPLENAME>"
+    },
+    "procedure": {
+      "procedureName": "demo experiment",
+      "testType": "Custom",
+      "segments": [
+        {"type": "Data", "dataOn": true},
+        {"type": "Equilibrate", "temperatureC": -60},
+        {"type": "Isothermal", "isothermTimeMin": 5},
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 190},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ]
+    }
+  }
+}
+
+# Sample response: 201 Created
+# {"experiment_id":"EXP-001", ..., "status":"draft","runs":[{"run_id":"RUN-001","status":"pending","run_method":{ ...as sent... },"run_method_str":"{...}"}]}
+# Errors: 409 not draft · 422 lists every invalid field, and nothing is saved
+
+### DSC 4b — Add a second run (appended; runs may share slots, each run is checked on its own)
+# @name addDscRun2
+POST {{baseUrl}}/experiments/{{dscId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "sampleInfo": {
+      "sampleNameA": "nameA",
+      "sampleNameB": "nameB",
+      "sampleNameC": "nameC",
+      "samplePanA": {"trayPosition": 16, "sampleMass": 5, "panMass": 42.7},
+      "samplePanB": {"trayPosition": 17, "sampleMass": 4.8, "panMass": 43.5},
+      "samplePanC": {"trayPosition": 18, "sampleMass": 5.1, "panMass": 43.7},
+      "useSensorA": true,
+      "useSensorB": true,
+      "useSensorC": true,
+      "referencePanTrayPosition": 15,
+      "operator": "operator",
+      "project": "project",
+      "notes": ""
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "DSC-<SAMPLENAME>"
+    },
+    "procedure": {
+      "procedureName": "demo experiment",
+      "testType": "Custom",
+      "segments": [
+        {"type": "Data", "dataOn": true},
+        {"type": "Equilibrate", "temperatureC": -60},
+        {"type": "Isothermal", "isothermTimeMin": 5},
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 190},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ]
+    }
+  }
+}
+
+# Sample response: 201 Created
+# {"experiment_id":"EXP-001", ..., "runs":[{"run_id":"RUN-001", ...},{"run_id":"RUN-002", ...}]}
+# Errors: 422 on run_method.sampleInfo.samplePanA.trayPosition if it is off the tray or used twice in this run
+
+### DSC 4c — Edit a run (keeps its run_id and place)
+PUT {{baseUrl}}/experiments/{{dscId}}/runs/{{dscRunId}}
+Content-Type: application/json
+
+{
+  "run_method": {
+    "sampleInfo": {
+      "sampleNameA": "nameA",
+      "sampleNameB": "nameB",
+      "sampleNameC": "nameC",
+      "samplePanA": {"trayPosition": 12, "sampleMass": 5, "panMass": 42.7},
+      "samplePanB": {"trayPosition": 13, "sampleMass": 4.8, "panMass": 43.5},
+      "samplePanC": {"trayPosition": 14, "sampleMass": 5.1, "panMass": 43.7},
+      "useSensorA": true,
+      "useSensorB": true,
+      "useSensorC": true,
+      "referencePanTrayPosition": 15,
+      "operator": "operator",
+      "project": "project",
+      "notes": "re-weighed pan B"
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "DSC-<SAMPLENAME>"
+    },
+    "procedure": {
+      "procedureName": "demo experiment",
+      "testType": "Custom",
+      "segments": [
+        {"type": "Data", "dataOn": true},
+        {"type": "Equilibrate", "temperatureC": -60},
+        {"type": "Isothermal", "isothermTimeMin": 5},
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 190},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ]
+    }
+  }
+}
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "runs":[{"run_id":"RUN-001","status":"pending","run_method":{ ..."notes":"re-weighed pan B"... },"run_method_str":"{...}"}, ...]}
+# Errors: 404 not a run of this experiment · 409 not draft · 422 invalid field
+
+### DSC 4d — Delete a run
+DELETE {{baseUrl}}/experiments/{{dscId}}/runs/{{dscRun2Id}}
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "runs":[{"run_id":"RUN-001", ...}]}
+# Errors: 404 not a run of this experiment · 409 not draft
+
+### DSC 5 — Submit (marks it ready; does not run the instrument)
+POST {{baseUrl}}/experiments/{{dscId}}/submit
+
+# Sample response: 200 OK
+# {"experiment_id":"EXP-001", ..., "status":"ready","runs":[ ... ]}
+# Errors: 409 already submitted · 422 no runs
+
+### DSC 6 — Editing after submit is rejected
+POST {{baseUrl}}/experiments/{{dscId}}/runs
+Content-Type: application/json
+
+{"run_method": {}}
+
+# Sample response: 409 Conflict
+
+### ======================================== 3. TGA
+
+### TGA 1 — Create
+# @name createTga
+POST {{baseUrl}}/experiments
+Content-Type: application/json
+
+{"name": "Polymer TGA Decomposition", "instrument_id": "TGA-001"}
+
+### TGA 2 — Link the tray
+PUT {{baseUrl}}/experiments/{{tgaId}}/tray
+Content-Type: application/json
+
+{"qr_code": "QR-SLOT30-001"}
+
+### TGA 3 — Add a run (the docs/sdt.md example; no masses, the balance weighs)
+POST {{baseUrl}}/experiments/{{tgaId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "experimentKind": "dualSample",
+    "name": "empty_combustion_air",
+    "sampleInfo": {
+      "sampleAName": "sampleA",
+      "sampleAPan": {"trayPosition": 29, "panType": "Aluminum"},
+      "sampleBName": "sampleA",
+      "sampleBPan": {"trayPosition": 30, "panType": "Aluminum"},
+      "operator": "operator",
+      "project": "project",
+      "notes": ""
+    },
+    "filePaths": {
+      "fileDirectory": "C:\\Users\\User\\Desktop\\experiment_output",
+      "tokens": "TGA-<SAMPLENAME>"
+    },
+    "procedure": {
+      "testType": "Custom",
+      "procedureName": "demo_test",
+      "segments": [
+        {"type": "Ramp", "rampRateDegCPerMin": 10, "finalTemperatureC": 500},
+        {"type": "Isothermal", "isothermTimeMin": 5}
+      ],
+      "advancedOptions": {
+        "skipWeightStabilization": true,
+        "airCoolEnable": true,
+        "coolUntilTemperatureC": 25,
+        "endOfRunDelayMin": 0
+      }
+    }
+  }
+}
+
+
+### TGA 4 — Submit
+POST {{baseUrl}}/experiments/{{tgaId}}/submit
+
+
+### ======================================== 4. FTIR
+
+### FTIR 1 — Create
+# @name createFtir
+POST {{baseUrl}}/experiments
+Content-Type: application/json
+
+{"name": "Polymer FTIR Functional Groups", "instrument_id": "FTIR-001"}
+
+### FTIR 2 — Link the plate
+PUT {{baseUrl}}/experiments/{{ftirId}}/tray
+Content-Type: application/json
+
+{"qr_code": "QR-PLATE96-001"}
+
+### FTIR 3 — Add a run (the docs/ftir.md example; Well must be on the plate)
+POST {{baseUrl}}/experiments/{{ftirId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "ExperimentFile": "C:/Users/Public/Documents/Bruker/OPUS_9.3.1/OpusLab/Xpm/HTS-trans.XPM",
+    "Resolution": 0,
+    "SampleScans": 0,
+    "BackgroundScans": 0,
+    "Well": "B3",
+    "SampleName": "my-sample",
+    "Operator": "operator",
+    "Project": "project"
+  }
+}
+
+
+### FTIR 4 — Submit
+POST {{baseUrl}}/experiments/{{ftirId}}/submit
+
+
+### ======================================== 5. GPC (no tray)
+
+### GPC 1 — Create
+# @name createGpc
+POST {{baseUrl}}/experiments
+Content-Type: application/json
+
+{"name": "Polymer GPC Molecular Weight", "instrument_id": "GPC-001"}
+
+### GPC 2 — Add a run ({} — WinGPC runs its loaded sequence)
+POST {{baseUrl}}/experiments/{{gpcId}}/runs
+Content-Type: application/json
+
+{"run_method": {}}
+
+
+### GPC 3 — Submit
+POST {{baseUrl}}/experiments/{{gpcId}}/submit
+
+
+### ======================================== 6. ALL EXPERIMENTS
+
+### ALL 1 — List experiments (a summary; "Get" returns the runs)
+GET {{baseUrl}}/experiments
+
+# Sample response: 200 OK
+# {"experiments":[{"experiment_id":"EXP-001","experiment_type":"material_characterization","name":"Polymer DSC Characterization","instrument_id":"DSC-001","tray_id":"TRAY-001","status":"ready","run_count":1}, ...]}
