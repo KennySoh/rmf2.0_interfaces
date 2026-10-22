@@ -14,7 +14,7 @@
 # e.g. GET {{gw}}/experiment/api/experiments -> GET ${EXPERIMENT_URL}/api/experiments
 #
 # This file checks the gateway (routing, CORS and auth injection) and runs the
-# Experiment Service setup + DSC full flow through it. Other backends' full request
+# Experiment Service setup, DSC full flow and FTIR flow through it. Other backends' full request
 # bodies are in their own .http files; put {{gw}}/<prefix> in front to use the gateway.
 #
 # An unreachable backend gives 502. A path with no route gives 404
@@ -24,6 +24,7 @@
 @origin = http://192.168.50.110:5173
 @workflow_id = 2026100001
 @dscId = {{createDsc.response.body.$.experiment_id}}
+@ftirId = {{createFtir.response.body.$.experiment_id}}
 @dscRunId = {{addDscRun.response.body.$.runs[0].run_id}}
 @dscRun2Id = {{addDscRun2.response.body.$.runs[1].run_id}}
 
@@ -43,7 +44,7 @@ GET {{gw}}/nope
 # {"error":"no route for this path"}
 
 ### ======================================== 2. EXPERIMENT SERVICE (/experiment)
-# Setup + the DSC full flow from docs/experiment/experiment.http, sent through the gateway.
+# Setup, the DSC full flow and the FTIR flow from docs/experiment/experiment.http, sent through the gateway.
 # Send top to bottom: "Create" stores its experiment_id for the requests after it.
 
 ### ---------------------------------------- 2a. SETUP
@@ -281,6 +282,42 @@ Content-Type: application/json
 {"run_method": {}}
 
 # Sample response: 409 Conflict
+
+
+### ---------------------------------------- 2c. FTIR
+
+### FTIR 1 — Create
+# @name createFtir
+POST {{gw}}/experiment/api/experiments
+Content-Type: application/json
+
+{"name": "Polymer FTIR Functional Groups", "instrument_id": "FTIR-001"}
+
+### FTIR 2 — Link the plate
+PUT {{gw}}/experiment/api/experiments/{{ftirId}}/tray
+Content-Type: application/json
+
+{"qr_code": "QR-PLATE96-001"}
+
+### FTIR 3 — Add a run (the docs/ftir.md example; Well must be on the plate)
+POST {{gw}}/experiment/api/experiments/{{ftirId}}/runs
+Content-Type: application/json
+
+{
+  "run_method": {
+    "ExperimentFile": "C:/Users/Public/Documents/Bruker/OPUS_9.3.1/OpusLab/Xpm/HTS-trans.XPM",
+    "Resolution": 0,
+    "SampleScans": 0,
+    "BackgroundScans": 0,
+    "Well": "B3",
+    "SampleName": "my-sample",
+    "Operator": "operator",
+    "Project": "project"
+  }
+}
+
+### FTIR 4 — Submit
+POST {{gw}}/experiment/api/experiments/{{ftirId}}/submit
 
 
 ### ======================================== 3. SCHEDULER (/scheduler)
